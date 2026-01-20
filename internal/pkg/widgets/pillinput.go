@@ -24,19 +24,15 @@ type PillInputModel struct {
 // It updates a widget with the message `tea.WindowSizeMsg`.
 func NewPillInputModel(suggestions []string) PillInputModel {
 	ti := textinput.New()
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	ti.Placeholder = "Field name or search term..."
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("7"))
 	ti.Focus()
-	ti.CharLimit = 50
-	ti.Width = 20
 	ti.ShowSuggestions = true
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Background(lipgloss.Color("245"))
 	ti.SetSuggestions(suggestions)
 
 	h := help.New()
 
 	km := inputKeymap{}
-
-	// suggestions := []string{"Apples", "Ananas", "Bananas", "Oranges", "Grape"}
 
 	return PillInputModel{textInput: ti, help: h, keymap: km, isPillVisible: false, filterField: "", suggestions: suggestions}
 }
@@ -46,8 +42,8 @@ type inputKeymap struct{}
 func (k inputKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete")),
-		key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next")),
-		key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev")),
+		key.NewBinding(key.WithKeys("down", "ctrl+n"), key.WithHelp("(↓, ctrl+n)", "next")),
+		key.NewBinding(key.WithKeys("up", "ctrl+p"), key.WithHelp("(↑, ctrl+p)", "prev")),
 		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
 	}
 }
@@ -57,7 +53,7 @@ func (k inputKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m PillInputModel) Init() tea.Cmd {
-	return m.textInput.Focus()
+	return nil
 }
 
 func (m PillInputModel) Update(msg tea.Msg) (PillInputModel, tea.Cmd) {
@@ -73,6 +69,7 @@ func (m PillInputModel) Update(msg tea.Msg) (PillInputModel, tea.Cmd) {
 				m.textInput.Reset()
 				m.textInput.SetValue("")
 				m.textInput.SetSuggestions([]string{})
+				m.textInput.Placeholder = "Search term..."
 
 				// 2. Disable suggestions for the "Value" phase
 				m.textInput.ShowSuggestions = false
@@ -106,8 +103,8 @@ func (m PillInputModel) Update(msg tea.Msg) (PillInputModel, tea.Cmd) {
 }
 
 var pillStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("15")).
-	Background(lipgloss.Color("62")). // Purple background
+	Foreground(lipgloss.Color("229")).
+	Background(lipgloss.Color("57")). // Purple background
 	Padding(0, 1).
 	MarginRight(1).
 	Bold(true)
