@@ -46,9 +46,14 @@ func (s StateFilteredModel) Init() tea.Cmd {
 
 // View renders component. It implements tea.Model.
 func (s StateFilteredModel) View() string {
-	footer := s.FooterStyle.Render(
-		fmt.Sprintf("filtered %d by: %s", s.logEntries.Len(), s.filterText),
-	)
+	var msg string
+	if s.filterField == "" {
+		msg = fmt.Sprintf("filtered %d by: %s", s.logEntries.Len(), s.filterText)
+	} else {
+		msg = fmt.Sprintf("filtered %d by field: %s, query: %s", s.logEntries.Len(), s.filterField, s.filterText)
+	}
+
+	footer := s.FooterStyle.Render(msg)
 
 	return s.BaseStyle.Render(s.table.View()) + "\n" + footer
 }
