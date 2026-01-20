@@ -18,19 +18,22 @@ type StateFilteredModel struct {
 	table         logsTableModel
 	logEntries    source.LazyLogEntries
 
-	filterText string
+	filterText  string
+	filterField string
 }
 
 func newStateFiltered(
 	previousState StateLoadedModel,
 	filterText string,
+	filterField string,
 ) StateFilteredModel {
 	return StateFilteredModel{
 		Application: previousState.Application,
 
 		previousState: previousState,
 
-		filterText: filterText,
+		filterText:  filterText,
+		filterField: filterField,
 	}
 }
 
@@ -94,7 +97,7 @@ func (s StateFilteredModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (s StateFilteredModel) handleStateFilteredModel() (StateFilteredModel, tea.Msg) {
-	entries, err := s.Application.Entries().Filter(s.filterText, s.Config)
+	entries, err := s.Application.Entries().Filter(s.filterField, s.filterText, s.Config)
 	if err != nil {
 		return s, events.ShowError(err)()
 	}

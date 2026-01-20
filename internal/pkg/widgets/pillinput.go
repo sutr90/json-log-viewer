@@ -22,7 +22,7 @@ type PillInputModel struct {
 
 // NewPillInputModel initializes a new PillInputModel with the given text.
 // It updates a widget with the message `tea.WindowSizeMsg`.
-func NewPillInputModel() PillInputModel {
+func NewPillInputModel(suggestions []string) PillInputModel {
 	ti := textinput.New()
 	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
@@ -35,7 +35,7 @@ func NewPillInputModel() PillInputModel {
 
 	km := inputKeymap{}
 
-	suggestions := []string{"Apples", "Ananas", "Bananas", "Oranges", "Grape"}
+	// suggestions := []string{"Apples", "Ananas", "Bananas", "Oranges", "Grape"}
 
 	return PillInputModel{textInput: ti, help: h, keymap: km, isPillVisible: false, filterField: "", suggestions: suggestions}
 }
@@ -50,6 +50,7 @@ func (k inputKeymap) ShortHelp() []key.Binding {
 		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
 	}
 }
+
 func (k inputKeymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{k.ShortHelp()}
 }
@@ -61,8 +62,6 @@ func (m PillInputModel) Init() tea.Cmd {
 }
 
 func (m PillInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -99,10 +98,12 @@ func (m PillInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+			// TODO: just disable the filter mode here, onEnter submit the value
 			return m, tea.Quit
 		}
 	}
 
+	var cmd tea.Cmd
 	// Only update the input if we didn't handle a mode-switch above
 	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
@@ -114,9 +115,6 @@ var pillStyle = lipgloss.NewStyle().
 	Padding(0, 1).
 	MarginRight(1).
 	Bold(true)
-
-// Define a base style that clears the line by enforcing a width
-var containerStyle = lipgloss.NewStyle().Width(80)
 
 func (m PillInputModel) View() string {
 	var s strings.Builder
@@ -130,7 +128,13 @@ func (m PillInputModel) View() string {
 	// Render the input
 	s.WriteString(m.textInput.View())
 
-	// Wrap everything in containerStyle. This ensures that when the line
-	// gets shorter (pill disappears), the remaining space is overwritten with spaces.
-	return containerStyle.Render(s.String()) + "\n\n" + m.help.View(m.keymap)
+	return s.String() + "\n" + m.help.View(m.keymap)
+}
+
+func (m PillInputModel) Focus() tea.Cmd {
+	return m.textInput.Focus()
+}
+
+func (m PillInputModel) Value() (string, string) {
+	return m.filterField, m.textInput.Value()
 }

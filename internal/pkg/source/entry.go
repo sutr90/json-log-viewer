@@ -91,14 +91,14 @@ func (entries LazyLogEntries) Len() int {
 }
 
 // Filter filters entries by ignore case exact match.
-func (entries LazyLogEntries) Filter(term string, c *config.Config) (LazyLogEntries, error) {
+func (entries LazyLogEntries) Filter(fieldName string, term string, c *config.Config) (LazyLogEntries, error) {
 	if term == "" {
 		return entries, nil
 	}
 
-	field, searchTerm := getFilterFieldNameIndex(term, c)
+	fieldIndex := getFilterFieldNameIndex(fieldName, c)
 
-	termLower := bytes.ToLower([]byte(searchTerm))
+	termLower := bytes.ToLower([]byte(term))
 
 	filtered := make([]LazyLogEntry, 0, len(entries.Entries))
 
@@ -108,7 +108,7 @@ func (entries LazyLogEntries) Filter(term string, c *config.Config) (LazyLogEntr
 			return LazyLogEntries{}, err
 		}
 
-		if field == -1 {
+		if len(fieldName) == 0 {
 			// fulltext mode
 			if bytes.Contains(bytes.ToLower(line), termLower) {
 				filtered = append(filtered, f)
@@ -120,7 +120,7 @@ func (entries LazyLogEntries) Filter(term string, c *config.Config) (LazyLogEntr
 				return LazyLogEntries{}, entry.Error
 			}
 
-			if bytes.Contains(bytes.ToLower([]byte(entry.Fields[field])), termLower) {
+			if bytes.Contains(bytes.ToLower([]byte(entry.Fields[fieldIndex])), termLower) {
 				filtered = append(filtered, f)
 			}
 		}
@@ -132,20 +132,18 @@ func (entries LazyLogEntries) Filter(term string, c *config.Config) (LazyLogEntr
 	}, nil
 }
 
-func getFilterFieldNameIndex(term string, c *config.Config) (int, string) {
-	if c == nil {
-		return -1, term
+func getFilterFieldNameIndex(fieldName string, c *config.Config) int {
+	if c == nil || fieldName == "" {
+		return -1
 	}
-	split := strings.Split(term, ":")
-	// TODO this is wrong, the field name can contain colon e.g. "foo:bar":"bla"
-	split[0] = strings.TrimSpace(split[0])
+
 	for i, field := range c.Fields {
-		if strings.EqualFold(field.Title, split[0]) {
-			return i, split[1]
+		if strings.EqualFold(field.Title, fieldName) {
+			return i
 		}
 	}
 
-	return -1, split[1]
+	return -1
 }
 
 func parseField(

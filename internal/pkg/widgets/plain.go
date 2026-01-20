@@ -37,15 +37,15 @@ func NewPlainLogModel(
 	return m, cmd
 }
 
-// Init implements team.Model interface.
+// Init implements tea.Model interface.
 func (m PlainLogModel) Init() tea.Cmd { return nil }
 
-// View implements team.Model interface.
+// View implements tea.Model interface.
 func (m PlainLogModel) View() string {
 	return m.viewport.View()
 }
 
-// Update implements team.Model interface.
+// Update implements tea.Model interface.
 func (m PlainLogModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// nolint: gocritic // For future extension.
 	switch msg := msg.(type) {

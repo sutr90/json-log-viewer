@@ -276,7 +276,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, logEntry := createEntries(t)
 
-		filtered, err := logEntries.Filter(term, nil)
+		filtered, err := logEntries.Filter(term, "", nil)
 		require.NoError(t, err)
 
 		if assert.Len(t, filtered.Entries, 1) {
@@ -289,7 +289,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, logEntry := createEntries(t)
 
-		filtered, err := logEntries.Filter(strings.ToUpper(term), nil)
+		filtered, err := logEntries.Filter(strings.ToUpper(term), "", nil)
 		require.NoError(t, err)
 
 		if assert.Len(t, filtered.Entries, 1) {
@@ -302,7 +302,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, _ := createEntries(t)
 
-		filtered, err := logEntries.Filter("", nil)
+		filtered, err := logEntries.Filter("", "", nil)
 		require.NoError(t, err)
 		assert.Len(t, filtered.Entries, logEntries.Len())
 	})
@@ -312,7 +312,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, _ := createEntries(t)
 
-		filtered, err := logEntries.Filter(term+" - not found!", nil)
+		filtered, err := logEntries.Filter(term+" - not found!", "", nil)
 		require.NoError(t, err)
 
 		assert.Empty(t, filtered.Entries)
@@ -331,7 +331,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries.Seeker = f
 
-		_, err = logEntries.Filter(term+" - not found!", nil)
+		_, err = logEntries.Filter(term+" - not found!", "", nil)
 		require.Error(t, err)
 	})
 }
@@ -368,7 +368,7 @@ func TestLazyLogEntriesFieldFilter(t *testing.T) {
 
 		logEntries, logEntry := createEntries(t)
 
-		filtered, err := logEntries.Filter(term, c)
+		filtered, err := logEntries.Filter(term, "", c)
 		require.NoError(t, err)
 
 		if assert.Len(t, filtered.Entries, 1) {
