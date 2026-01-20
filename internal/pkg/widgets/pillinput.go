@@ -89,6 +89,7 @@ func (m PillInputModel) Update(msg tea.Msg) (PillInputModel, tea.Cmd) {
 				m.textInput.Reset()
 				m.textInput.SetValue(m.filterField)
 				m.textInput.CursorEnd()
+				m.filterField = "" // Clear the filter field when going back
 
 				// Re-enable suggestions for the "Field" phase
 				m.textInput.ShowSuggestions = true
