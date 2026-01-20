@@ -1,7 +1,6 @@
-package main
+package widgets
 
 import (
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -11,51 +10,20 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func main() {
-	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-type gotReposSuccessMsg []repo
-
-type repo struct {
-	Name string `json:"name"`
-}
-
-func getRepos() tea.Msg {
-	var repos []repo
-	return gotReposSuccessMsg(repos)
-}
-
-type model struct {
+// PillInputModel is a widget that allows inputting text with optional prefix selected from autocomplete suggestion
+type PillInputModel struct {
 	textInput     textinput.Model
 	help          help.Model
-	keymap        keymap
-	filterField   string // e.g., "level"
-	isPillVisible bool   // true if a field is selected
+	keymap        inputKeymap
+	filterField   string   // e.g., "level"
+	isPillVisible bool     // true if a field is selected
+	suggestions   []string // pill suggestions
 }
 
-type keymap struct{}
-
-func (k keymap) ShortHelp() []key.Binding {
-	return []key.Binding{
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete")),
-		key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next")),
-		key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev")),
-		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
-	}
-}
-func (k keymap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{k.ShortHelp()}
-}
-
-func initialModel() model {
+// NewPillInputModel initializes a new PillInputModel with the given text.
+// It updates a widget with the message `tea.WindowSizeMsg`.
+func NewPillInputModel() PillInputModel {
 	ti := textinput.New()
-	//ti.Placeholder = "Enter value..."
-	//ti.Prompt = "Filter:"
-	//ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	ti.CharLimit = 50
@@ -65,18 +33,34 @@ func initialModel() model {
 
 	h := help.New()
 
-	km := keymap{}
+	km := inputKeymap{}
 
-	return model{textInput: ti, help: h, keymap: km, isPillVisible: false, filterField: ""}
+	suggestions := []string{"Apples", "Ananas", "Bananas", "Oranges", "Grape"}
+
+	return PillInputModel{textInput: ti, help: h, keymap: km, isPillVisible: false, filterField: "", suggestions: suggestions}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(getRepos, textinput.Blink)
+type inputKeymap struct{}
+
+func (k inputKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete")),
+		key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next")),
+		key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev")),
+		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
+	}
+}
+func (k inputKeymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{k.ShortHelp()}
 }
 
-var suggestions = []string{"Apples", "Ananas", "Bananas", "Oranges", "Grape"}
+func (m PillInputModel) Init() tea.Cmd {
+	// set initial suggestions
+	m.textInput.SetSuggestions(m.suggestions)
+	return nil
+}
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m PillInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -110,16 +94,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// Re-enable suggestions for the "Field" phase
 				m.textInput.ShowSuggestions = true
-				m.textInput.SetSuggestions(suggestions)
+				m.textInput.SetSuggestions(m.suggestions)
 				return m, nil
 			}
 
 		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		}
-
-	case gotReposSuccessMsg:
-		m.textInput.SetSuggestions(suggestions)
 	}
 
 	// Only update the input if we didn't handle a mode-switch above
@@ -137,7 +118,7 @@ var pillStyle = lipgloss.NewStyle().
 // Define a base style that clears the line by enforcing a width
 var containerStyle = lipgloss.NewStyle().Width(80)
 
-func (m model) View() string {
+func (m PillInputModel) View() string {
 	var s strings.Builder
 
 	if m.isPillVisible {
