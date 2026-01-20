@@ -45,8 +45,7 @@ func newStateFiltering(
 
 // Init initializes component. It implements tea.Model.
 func (s StateFilteringModel) Init() tea.Cmd {
-	s.textInput.Init()
-	return nil
+	return s.textInput.Init()
 }
 
 // View renders component. It implements tea.Model.
@@ -71,7 +70,11 @@ func (s StateFilteringModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.table, cmdBatch = batched(s.table.Update(msg))(cmdBatch)
 	}
 
-	s.textInput, cmdBatch = batched(s.textInput.Update(msg))(cmdBatch)
+	var cmd tea.Cmd
+	s.textInput, cmd = s.textInput.Update(msg)
+	if cmd != nil {
+		cmdBatch = append(cmdBatch, cmd)
+	}
 
 	return s, tea.Batch(cmdBatch...)
 }

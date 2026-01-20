@@ -30,6 +30,7 @@ func NewPillInputModel(suggestions []string) PillInputModel {
 	ti.Width = 20
 	ti.ShowSuggestions = true
 	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Background(lipgloss.Color("245"))
+	ti.SetSuggestions(suggestions)
 
 	h := help.New()
 
@@ -56,12 +57,10 @@ func (k inputKeymap) FullHelp() [][]key.Binding {
 }
 
 func (m PillInputModel) Init() tea.Cmd {
-	// set initial suggestions
-	m.textInput.SetSuggestions(m.suggestions)
-	return nil
+	return m.textInput.Focus()
 }
 
-func (m PillInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m PillInputModel) Update(msg tea.Msg) (PillInputModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -96,10 +95,6 @@ func (m PillInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput.SetSuggestions(m.suggestions)
 				return m, nil
 			}
-
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
-			// TODO: just disable the filter mode here, onEnter submit the value
-			return m, tea.Quit
 		}
 	}
 
