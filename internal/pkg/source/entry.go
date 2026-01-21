@@ -91,10 +91,12 @@ func (entries LazyLogEntries) Len() int {
 }
 
 // Filter filters entries by ignore case exact match.
-func (entries LazyLogEntries) Filter(term string) (LazyLogEntries, error) {
+func (entries LazyLogEntries) Filter(fieldName string, term string, c *config.Config) (LazyLogEntries, error) {
 	if term == "" {
 		return entries, nil
 	}
+
+	fieldIndex := getFilterFieldNameIndex(fieldName, c)
 
 	termLower := bytes.ToLower([]byte(term))
 
@@ -106,8 +108,21 @@ func (entries LazyLogEntries) Filter(term string) (LazyLogEntries, error) {
 			return LazyLogEntries{}, err
 		}
 
-		if bytes.Contains(bytes.ToLower(line), termLower) {
-			filtered = append(filtered, f)
+		if len(fieldName) == 0 {
+			// fulltext mode
+			if bytes.Contains(bytes.ToLower(line), termLower) {
+				filtered = append(filtered, f)
+			}
+		} else {
+			// field mode
+			entry := f.LogEntry(entries.Seeker, c)
+			if entry.Error != nil {
+				return LazyLogEntries{}, entry.Error
+			}
+
+			if bytes.Contains(bytes.ToLower([]byte(entry.Fields[fieldIndex])), termLower) {
+				filtered = append(filtered, f)
+			}
 		}
 	}
 
@@ -115,6 +130,20 @@ func (entries LazyLogEntries) Filter(term string) (LazyLogEntries, error) {
 		Seeker:  entries.Seeker,
 		Entries: filtered,
 	}, nil
+}
+
+func getFilterFieldNameIndex(fieldName string, c *config.Config) int {
+	if c == nil || fieldName == "" {
+		return -1
+	}
+
+	for i, field := range c.Fields {
+		if strings.EqualFold(field.Title, fieldName) {
+			return i
+		}
+	}
+
+	return -1
 }
 
 func parseField(

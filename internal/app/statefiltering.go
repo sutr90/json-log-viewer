@@ -2,11 +2,11 @@ package app
 
 import (
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/hedhyw/json-log-viewer/internal/keymap"
 	"github.com/hedhyw/json-log-viewer/internal/pkg/events"
+	"github.com/hedhyw/json-log-viewer/internal/pkg/widgets"
 )
 
 // StateFilteringModel is a state to prompt for filter term.
@@ -16,14 +16,20 @@ type StateFilteringModel struct {
 	previousState StateLoadedModel
 	table         logsTableModel
 
-	textInput textinput.Model
+	textInput widgets.PillInputModel
 	keys      keymap.KeyMap
 }
 
 func newStateFiltering(
 	previousState StateLoadedModel,
 ) StateFilteringModel {
-	textInput := textinput.New()
+
+	var s []string
+	for _, f := range previousState.Config.Fields {
+		s = append(s, f.Title)
+	}
+
+	textInput := widgets.NewPillInputModel(s)
 	textInput.Focus()
 
 	return StateFilteringModel{
@@ -39,7 +45,7 @@ func newStateFiltering(
 
 // Init initializes component. It implements tea.Model.
 func (s StateFilteringModel) Init() tea.Cmd {
-	return nil
+	return s.textInput.Init()
 }
 
 // View renders component. It implements tea.Model.
@@ -64,7 +70,11 @@ func (s StateFilteringModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.table, cmdBatch = batched(s.table.Update(msg))(cmdBatch)
 	}
 
-	s.textInput, cmdBatch = batched(s.textInput.Update(msg))(cmdBatch)
+	var cmd tea.Cmd
+	s.textInput, cmd = s.textInput.Update(msg)
+	if cmd != nil {
+		cmdBatch = append(cmdBatch, cmd)
+	}
 
 	return s, tea.Batch(cmdBatch...)
 }
@@ -81,13 +91,15 @@ func (s StateFilteringModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (s StateFilteringModel) handleEnterKeyClickedMsg() (tea.Model, tea.Cmd) {
-	if s.textInput.Value() == "" {
+	filterField, input := s.textInput.Value()
+	if input == "" {
 		return s, events.EscKeyClicked
 	}
 
 	return initializeModel(newStateFiltered(
 		s.previousState,
-		s.textInput.Value(),
+		input,
+		filterField,
 	))
 }
 

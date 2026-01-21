@@ -18,19 +18,22 @@ type StateFilteredModel struct {
 	table         logsTableModel
 	logEntries    source.LazyLogEntries
 
-	filterText string
+	filterText  string
+	filterField string
 }
 
 func newStateFiltered(
 	previousState StateLoadedModel,
 	filterText string,
+	filterField string,
 ) StateFilteredModel {
 	return StateFilteredModel{
 		Application: previousState.Application,
 
 		previousState: previousState,
 
-		filterText: filterText,
+		filterText:  filterText,
+		filterField: filterField,
 	}
 }
 
@@ -43,9 +46,14 @@ func (s StateFilteredModel) Init() tea.Cmd {
 
 // View renders component. It implements tea.Model.
 func (s StateFilteredModel) View() string {
-	footer := s.FooterStyle.Render(
-		fmt.Sprintf("filtered %d by: %s", s.logEntries.Len(), s.filterText),
-	)
+	var msg string
+	if s.filterField == "" {
+		msg = fmt.Sprintf("filtered %d by: %s", s.logEntries.Len(), s.filterText)
+	} else {
+		msg = fmt.Sprintf("filtered %d by field: %s, query: %s", s.logEntries.Len(), s.filterField, s.filterText)
+	}
+
+	footer := s.FooterStyle.Render(msg)
 
 	return s.BaseStyle.Render(s.table.View()) + "\n" + footer
 }
@@ -94,7 +102,7 @@ func (s StateFilteredModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (s StateFilteredModel) handleStateFilteredModel() (StateFilteredModel, tea.Msg) {
-	entries, err := s.Application.Entries().Filter(s.filterText)
+	entries, err := s.Application.Entries().Filter(s.filterField, s.filterText, s.Config)
 	if err != nil {
 		return s, events.ShowError(err)()
 	}
