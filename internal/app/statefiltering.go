@@ -23,13 +23,12 @@ type StateFilteringModel struct {
 func newStateFiltering(
 	previousState StateLoadedModel,
 ) StateFilteringModel {
-
-	var s []string
-	for _, f := range previousState.Config.Fields {
-		s = append(s, f.Title)
+	fieldTitles := make([]string, len(previousState.Config.Fields))
+	for i, f := range previousState.Config.Fields {
+		fieldTitles[i] = f.Title
 	}
 
-	textInput := widgets.NewPillInputModel(s)
+	textInput := widgets.NewPillInputModel(fieldTitles)
 	textInput.Focus()
 
 	return StateFilteringModel{

@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// PillInputModel is a widget that allows inputting text with optional prefix selected from autocomplete suggestion
+// PillInputModel is a widget that allows inputting text with optional prefix selected from autocomplete suggestion.
 type PillInputModel struct {
 	textInput     textinput.Model
 	help          help.Model
@@ -57,9 +57,8 @@ func (m PillInputModel) Init() tea.Cmd {
 }
 
 func (m PillInputModel) Update(msg tea.Msg) (PillInputModel, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch keyMsg.Type {
 		case tea.KeyTab:
 			if m.textInput.ShowSuggestions && len(m.textInput.AvailableSuggestions()) > 0 {
 				m.filterField = m.textInput.CurrentSuggestion()
