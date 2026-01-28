@@ -91,7 +91,7 @@ func (entries LazyLogEntries) Len() int {
 }
 
 // Filter filters entries by ignore case exact match.
-func (entries LazyLogEntries) Filter(fieldName string, term string, c *config.Config) (LazyLogEntries, error) {
+func (entries LazyLogEntries) Filter(term string, fieldName string, c *config.Config) (LazyLogEntries, error) {
 	if term == "" {
 		return entries, nil
 	}

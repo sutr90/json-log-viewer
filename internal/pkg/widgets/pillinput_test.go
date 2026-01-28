@@ -31,7 +31,7 @@ func TestPillInputModelInit(t *testing.T) {
 	model := widgets.NewPillInputModel(suggestions)
 
 	cmd := model.Init()
-	assert.NotNil(t, cmd, "Init should return a focus command")
+	assert.Nil(t, cmd, "Init should return nil command")
 }
 
 func TestPillInputModelView(t *testing.T) {

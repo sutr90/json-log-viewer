@@ -339,26 +339,27 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 func TestLazyLogEntriesFieldFilter(t *testing.T) {
 	t.Parallel()
 
-	term := "level:info"
+	const term = "info"
 
-	logs := `
+	const logs = `
 {"level":"info","time":"2025-12-16T13:20:00-05:00","message":"2025-12-16 13:20:00.049  Day1|  Ana went home!"}
 {"level":"debug","time":"2025-12-16T13:20:00-05:00","message":"2025-12-16 13:21:00.049  Day2| Tom was daydreaming"}
 {"level":"error","time":"2025-12-16T13:20:00-05:00","message":"2025-12-16 13:22:00.049  Day3| Can't wait to be weekend!"}
 `
 
-	c := config.GetDefaultConfig()
+	defaultConfig := config.GetDefaultConfig()
 
 	createEntries := func(tb testing.TB) (source.LazyLogEntries, source.LazyLogEntry) {
-		source, err := source.Reader(bytes.NewReader([]byte(logs)), config.GetDefaultConfig())
-		require.NoError(t, err)
+		tb.Helper()
+		source, err := source.Reader(bytes.NewReader([]byte(logs)), defaultConfig)
+		require.NoError(tb, err)
 
 		tb.Cleanup(func() { assert.NoError(tb, source.Close()) })
 
 		logEntries, err := source.ParseLogEntries()
-		require.NoError(t, err)
+		require.NoError(tb, err)
 
-		logEntry := logEntries.Entries[1]
+		logEntry := logEntries.Entries[0]
 
 		return logEntries, logEntry
 	}
@@ -368,7 +369,7 @@ func TestLazyLogEntriesFieldFilter(t *testing.T) {
 
 		logEntries, logEntry := createEntries(t)
 
-		filtered, err := logEntries.Filter(term, "", c)
+		filtered, err := logEntries.Filter(term, "level", defaultConfig)
 		require.NoError(t, err)
 
 		if assert.Len(t, filtered.Entries, 1) {

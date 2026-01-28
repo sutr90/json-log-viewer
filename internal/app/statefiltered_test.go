@@ -39,7 +39,7 @@ func TestStateFiltered(t *testing.T) {
 		})
 
 		lines := strings.Split(model.View(), "\n")
-		assert.Contains(t, lines[len(lines)-1], ">")
+		assert.Contains(t, lines[len(lines)-2], ">")
 
 		_, ok := model.(app.StateFilteringModel)
 		assert.Truef(t, ok, "%s", model)

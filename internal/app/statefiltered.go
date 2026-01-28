@@ -102,7 +102,7 @@ func (s StateFilteredModel) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (s StateFilteredModel) handleStateFilteredModel() (StateFilteredModel, tea.Msg) {
-	entries, err := s.Application.Entries().Filter(s.filterField, s.filterText, s.Config)
+	entries, err := s.Application.Entries().Filter(s.filterText, s.filterField, s.Config)
 	if err != nil {
 		return s, events.ShowError(err)()
 	}
