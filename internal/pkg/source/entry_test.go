@@ -276,7 +276,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, logEntry := createEntries(t)
 
-		filtered, err := logEntries.Filter(term)
+		filtered, err := logEntries.Filter(term, "", nil)
 		require.NoError(t, err)
 
 		if assert.Len(t, filtered.Entries, 1) {
@@ -289,7 +289,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, logEntry := createEntries(t)
 
-		filtered, err := logEntries.Filter(strings.ToUpper(term))
+		filtered, err := logEntries.Filter(strings.ToUpper(term), "", nil)
 		require.NoError(t, err)
 
 		if assert.Len(t, filtered.Entries, 1) {
@@ -302,7 +302,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, _ := createEntries(t)
 
-		filtered, err := logEntries.Filter("")
+		filtered, err := logEntries.Filter("", "", nil)
 		require.NoError(t, err)
 		assert.Len(t, filtered.Entries, logEntries.Len())
 	})
@@ -312,7 +312,7 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries, _ := createEntries(t)
 
-		filtered, err := logEntries.Filter(term + " - not found!")
+		filtered, err := logEntries.Filter(term+" - not found!", "", nil)
 		require.NoError(t, err)
 
 		assert.Empty(t, filtered.Entries)
@@ -331,8 +331,50 @@ func TestLazyLogEntriesFilter(t *testing.T) {
 
 		logEntries.Seeker = f
 
-		_, err = logEntries.Filter(term + " - not found!")
+		_, err = logEntries.Filter(term+" - not found!", "", nil)
 		require.Error(t, err)
+	})
+}
+
+func TestLazyLogEntriesFieldFilter(t *testing.T) {
+	t.Parallel()
+
+	const term = "info"
+
+	const logs = `
+{"level":"info","time":"2025-12-16T13:20:00-05:00","message":"2025-12-16 13:20:00.049  Day1|  Ana went home!"}
+{"level":"debug","time":"2025-12-16T13:20:00-05:00","message":"2025-12-16 13:21:00.049  Day2| Tom was daydreaming"}
+{"level":"error","time":"2025-12-16T13:20:00-05:00","message":"2025-12-16 13:22:00.049  Day3| Can't wait to be weekend!"}
+`
+
+	defaultConfig := config.GetDefaultConfig()
+
+	createEntries := func(tb testing.TB) (source.LazyLogEntries, source.LazyLogEntry) {
+		tb.Helper()
+		source, err := source.Reader(bytes.NewReader([]byte(logs)), defaultConfig)
+		require.NoError(tb, err)
+
+		tb.Cleanup(func() { assert.NoError(tb, source.Close()) })
+
+		logEntries, err := source.ParseLogEntries()
+		require.NoError(tb, err)
+
+		logEntry := logEntries.Entries[0]
+
+		return logEntries, logEntry
+	}
+
+	t.Run("found_exact", func(t *testing.T) {
+		t.Parallel()
+
+		logEntries, logEntry := createEntries(t)
+
+		filtered, err := logEntries.Filter(term, "level", defaultConfig)
+		require.NoError(t, err)
+
+		if assert.Len(t, filtered.Entries, 1) {
+			assert.Equal(t, logEntry, filtered.Entries[0])
+		}
 	})
 }
 
